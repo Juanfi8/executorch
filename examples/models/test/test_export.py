@@ -159,3 +159,28 @@ class ExportTest(unittest.TestCase):
         self.validate_tensor_allclose(
             list(eager_output), executorch_output, rtol=1e-2, atol=1e-2
         )
+
+    def test_simple_transformer_export_to_executorch(self):
+        eager_model, example_inputs, _, _ = EagerModelFactory.create_model(
+            *MODEL_NAME_TO_MODEL["simple_transformer"]
+        )
+        eager_output, executorch_output = self.collect_executorch_and_eager_outputs(
+            eager_model, example_inputs
+        )
+        with open("summary.txt", "w") as f:
+            f.write("Example Inputs:\n")
+            for i, input_tensor in enumerate(example_inputs):
+                f.write(f"Input {i}:\n{input_tensor}\n\n")
+
+            f.write("Pytorch Output:\n")
+            for i, output_tensor in enumerate(eager_output):
+                f.write(f"Output {i}:\n{output_tensor}\n\n")
+
+            f.write("Executorch Output:\n")
+            for i, output_tensor in enumerate(executorch_output[0]):
+                f.write(f"Output {i}:\n{output_tensor}\n\n")
+
+        self.validate_tensor_allclose(eager_output, executorch_output[0])  
+
+if __name__=="__main__":
+    unittest.main()
