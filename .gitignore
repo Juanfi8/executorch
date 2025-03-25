@@ -19,6 +19,8 @@ dist/
 ethos-u-scratch/
 executorch.egg-info
 pip-out/
+build/
+
 
 # Any exported models and profiling outputs
 *.bin
