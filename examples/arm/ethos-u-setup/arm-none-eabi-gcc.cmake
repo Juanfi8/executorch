@@ -20,7 +20,7 @@
 # modified to align better with cs300 platform
 
 set(TARGET_CPU
-    "cortex-m55"
+    "cortex-m33" #MODIFIED : Changed from cortex-m55
     CACHE STRING "Target CPU"
 )
 string(TOLOWER ${TARGET_CPU} CMAKE_SYSTEM_PROCESSOR)
@@ -75,7 +75,7 @@ elseif(
 )
   set(FLOAT hard)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m4(\\+|$)"
-       OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m7(\\+|$)"
+      OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m7(\\+|$)"
 )
   set(FLOAT hard)
   set(FPU_CONFIG "fpv4-sp-d16")
