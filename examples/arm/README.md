@@ -79,10 +79,10 @@ executorch/examples/arm/
 $ executorch/examples/arm/run.sh [--scratch-dir=same-optional-scratch-dir-as-before]
 ```
 This script by default will build and run 4 different models on the Corstone-300 FVP platform:
-- `softmax`
-- `add`
-- `add3`
-- `mv2`
+- `softmax` with portable kernels
+- `add` with delegation 
+- `add3` with delegation
+- `mv2` with delegation and quantization
 
 # Running custom models on different platforms
 
@@ -149,7 +149,7 @@ Options:
 
 ## Build on a different platform
 
-TODO
+TODO Once it works
 
 
 # Online  Tutorial

@@ -88,6 +88,8 @@ toolchain_cmake=${script_dir}/ethos-u-setup/arm-none-eabi-gcc.cmake
 _setup_msg="please refer to ${script_dir}/setup.sh to properly install necessary tools."
 
 
+#TODO for integration
+
 # Set target based variables
 if [[ ${system_config} == "" ]]
 then
