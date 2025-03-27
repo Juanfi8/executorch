@@ -528,6 +528,9 @@ def get_args():
         and models[args.model_name].can_delegate is False
     ):
         raise RuntimeError(f"Model {args.model_name} cannot be delegated.")
+    
+    if args.target not in targets:
+        raise RuntimeError(f"Invalid target name {args.target}")
 
     if "ethos-u" in args.target and args.system_config is None:
         if "u55" in args.target:

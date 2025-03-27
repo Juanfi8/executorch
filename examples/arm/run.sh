@@ -88,24 +88,29 @@ toolchain_cmake=${script_dir}/ethos-u-setup/arm-none-eabi-gcc.cmake
 _setup_msg="please refer to ${script_dir}/setup.sh to properly install necessary tools."
 
 
-#TODO for integration
-
 # Set target based variables
-if [[ ${system_config} == "" ]]
+if [[ ${target} == "cortex-m33" ]]
 then
-    system_config="Ethos_U55_High_End_Embedded"
-    if [[ ${target} =~ "ethos-u85" ]]
+    #TODO modify system_config and memory_mode
+    system_config="Cortex_M33_Config" 
+    memory_mode="Sram_Only"
+else
+    if [[ ${system_config} == "" ]]
     then
-        system_config="Ethos_U85_SYS_DRAM_Mid"
+        system_config="Ethos_U55_High_End_Embedded"
+        if [[ ${target} =~ "ethos-u85" ]]
+        then
+            system_config="Ethos_U85_SYS_DRAM_Mid"
+        fi
     fi
-fi
 
-if [[ ${memory_mode} == "" ]]
-then
-    memory_mode="Shared_Sram"
-    if [[ ${target} =~ "ethos-u85" ]]
+    if [[ ${memory_mode} == "" ]]
     then
-        memory_mode="Sram_Only"
+        memory_mode="Shared_Sram"
+        if [[ ${target} =~ "ethos-u85" ]]
+        then
+            memory_mode="Sram_Only"
+        fi
     fi
 fi
 
@@ -145,11 +150,10 @@ if [ "$bundleio" = true ] ; then
     et_dump_flag="--etdump"
 fi
 
+######## Build the executorch libraries ########
 backends/arm/scripts/build_executorch.sh --et_build_root="${et_build_root}" --build_type=$build_type $devtools_flag
-backends/arm/scripts/build_portable_kernels.sh --et_build_root="${et_build_root}" --build_type=$build_type --portable_kernels=$portable_kernels
-
-# Build a lib quantized_ops_aot_lib
-backends/arm/scripts/build_quantized_ops_aot_lib.sh --et_build_root="${et_build_root}" --build_type=$build_type
+backends/arm/scripts/build_portable_kernels.sh --et_build_root="${et_build_root}" --build_type=$build_type --portable_kernels=$portable_kernels #Build portable operators library
+backends/arm/scripts/build_quantized_ops_aot_lib.sh --et_build_root="${et_build_root}" --build_type=$build_type #Build quantized operators library
 
 SO_EXT=$(python3 -c 'import platform; print({"Darwin": "dylib", "Linux": "so", "Windows": "dll"}.get(platform.system(), None))')
 # We are using the aot_lib from build_quantization_aot_lib below

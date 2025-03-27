@@ -9,8 +9,8 @@ set -eu
 script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 et_root_dir=$(cd ${script_dir}/../../.. && pwd)
 et_root_dir=$(realpath ${et_root_dir})
-toolchain_cmake=${et_root_dir}/examples/arm/ethos-u-setup/arm-none-eabi-gcc.cmake
-setup_path_script=${et_root_dir}/examples/arm/ethos-u-scratch/setup_path.sh
+toolchain_cmake=${et_root_dir}/examples/arm/ethos-u-setup/arm-none-eabi-gcc.cmake #TODO
+setup_path_script=${et_root_dir}/examples/arm/ethos-u-scratch/setup_path.sh #TODO
 _setup_msg="please refer to ${et_root_dir}/examples/arm/setup.sh to properly install necessary tools."
 
 pte_file=""
@@ -89,21 +89,29 @@ if [ "$output_folder_set" = false ] ; then
     output_folder=${pte_file%.*}
 fi
 
-if [[ ${system_config} == "" ]]
+# Set target based variables
+if [[ ${target} == "cortex-m33" ]]
 then
-    system_config="Ethos_U55_High_End_Embedded"
-    if [[ ${target} =~ "ethos-u85" ]]
+    #TODO modify system_config and memory_mode
+    system_config="Cortex_M33_Config" 
+    memory_mode="Sram_Only"
+else
+    if [[ ${system_config} == "" ]]
     then
-        system_config="Ethos_U85_SYS_DRAM_Mid"
+        system_config="Ethos_U55_High_End_Embedded"
+        if [[ ${target} =~ "ethos-u85" ]]
+        then
+            system_config="Ethos_U85_SYS_DRAM_Mid"
+        fi
     fi
-fi
 
-if [[ ${memory_mode} == "" ]]
-then
-    memory_mode="Shared_Sram"
-    if [[ ${target} =~ "ethos-u85" ]]
+    if [[ ${memory_mode} == "" ]]
     then
-        memory_mode="Sram_Only"
+        memory_mode="Shared_Sram"
+        if [[ ${target} =~ "ethos-u85" ]]
+        then
+            memory_mode="Sram_Only"
+        fi
     fi
 fi
 
@@ -112,9 +120,15 @@ output_folder=$(realpath ${output_folder})
 
 if [[ ${target} == *"ethos-u55"*  ]]; then
     target_cpu=cortex-m55
-else
+elif [[ ${target} == *"ethos-u85"* ]]; then
     target_cpu=cortex-m85
+elif [[ ${target} == "cortex-m33" ]]; then
+    target_cpu=cortex-m33
+else
+    echo "Unsupported target: ${target}"
+    exit 1
 fi
+
 echo "--------------------------------------------------------------------------------"
 echo "Build Arm Baremetal executor_runner for ${target} with ${pte_file} using ${system_config} ${memory_mode} ${extra_build_flags} to '${output_folder}/cmake-out'"
 echo "--------------------------------------------------------------------------------"
@@ -131,8 +145,9 @@ fi
 
 echo "Building with BundleIO/etdump/extra flags: ${build_bundleio_flags} ${build_with_etdump_flags} ${extra_build_flags}"
 
+#TODO add the option to pass the cmake flags
 cmake \
-    -DCMAKE_BUILD_TYPE=${build_type}            \
+    -DCMAKE_BUILD_TYPE=${build_type}            \ 
     -DCMAKE_TOOLCHAIN_FILE=${toolchain_cmake}   \
     -DTARGET_CPU=${target_cpu}                  \
     -DET_DIR_PATH:PATH=${et_root_dir}           \
