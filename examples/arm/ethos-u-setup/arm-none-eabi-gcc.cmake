@@ -20,7 +20,7 @@
 # modified to align better with cs300 platform
 
 set(TARGET_CPU
-    "cortex-m33" #MODIFIED : Changed from cortex-m55
+    "cortex-m33" #Changed from cortex-m55 but it does not matter
     CACHE STRING "Target CPU"
 )
 string(TOLOWER ${TARGET_CPU} CMAKE_SYSTEM_PROCESSOR)
@@ -42,7 +42,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 set(GCC_CPU ${CMAKE_SYSTEM_PROCESSOR})
-string(REPLACE "cortex-m85" "cortex-m55" GCC_CPU ${GCC_CPU})
+string(REPLACE "cortex-m85" "cortex-m55" GCC_CPU ${GCC_CPU}) #Why is this necessary?
 
 # Compile options
 add_compile_options(

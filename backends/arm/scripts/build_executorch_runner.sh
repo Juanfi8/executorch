@@ -9,8 +9,8 @@ set -eu
 script_dir=$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd)
 et_root_dir=$(cd ${script_dir}/../../.. && pwd)
 et_root_dir=$(realpath ${et_root_dir})
-toolchain_cmake=${et_root_dir}/examples/arm/ethos-u-setup/arm-none-eabi-gcc.cmake #TODO
-setup_path_script=${et_root_dir}/examples/arm/ethos-u-scratch/setup_path.sh #TODO
+toolchain_cmake=${et_root_dir}/examples/arm/ethos-u-setup/arm-none-eabi-gcc.cmake 
+setup_path_script=${et_root_dir}/examples/arm/ethos-u-scratch/setup_path.sh #TODO 
 _setup_msg="please refer to ${et_root_dir}/examples/arm/setup.sh to properly install necessary tools."
 
 pte_file=""
@@ -133,6 +133,7 @@ echo "--------------------------------------------------------------------------
 echo "Build Arm Baremetal executor_runner for ${target} with ${pte_file} using ${system_config} ${memory_mode} ${extra_build_flags} to '${output_folder}/cmake-out'"
 echo "--------------------------------------------------------------------------------"
 
+#Executor runner cmake path
 cd ${et_root_dir}/examples/arm/executor_runner
 
 if [ "$bundleio" = true ] ; then
@@ -147,19 +148,19 @@ echo "Building with BundleIO/etdump/extra flags: ${build_bundleio_flags} ${build
 
 #TODO add the option to pass the cmake flags
 cmake \
-    -DCMAKE_BUILD_TYPE=${build_type}            \ 
+    -DCMAKE_BUILD_TYPE=${build_type}            \
     -DCMAKE_TOOLCHAIN_FILE=${toolchain_cmake}   \
-    -DTARGET_CPU=${target_cpu}                  \
+    -DTARGET_CPU=${target_cpu}                  \ #Only used by the toolchain file
     -DET_DIR_PATH:PATH=${et_root_dir}           \
     -DET_BUILD_DIR_PATH:PATH=${et_build_dir}    \
     -DET_PTE_FILE_PATH:PATH="${pte_file}"       \
-    -DETHOS_SDK_PATH:PATH=${ethos_u_root_dir}   \
-    -DETHOSU_TARGET_NPU_CONFIG=${target}        \
+    -DETHOS_SDK_PATH:PATH=${ethos_u_root_dir}   \ #TODO
+    -DETHOSU_TARGET_NPU_CONFIG=${target}        \ #TODO
     ${build_bundleio_flags}                     \
     ${build_with_etdump_flags}                  \
     -DPYTHON_EXECUTABLE=$(which python3)        \
-    -DSYSTEM_CONFIG=${system_config}            \
-    -DMEMORY_MODE=${memory_mode}                \
+    -DSYSTEM_CONFIG=${system_config}            \ #TODO
+    -DMEMORY_MODE=${memory_mode}                \ #TODO
     ${extra_build_flags}                        \
     -B ${output_folder}/cmake-out
 
