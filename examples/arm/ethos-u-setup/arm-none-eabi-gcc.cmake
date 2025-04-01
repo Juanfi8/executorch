@@ -36,13 +36,14 @@ set(TARGET_CPU
 )
 string(TOLOWER ${TARGET_CPU} CMAKE_SYSTEM_PROCESSOR)
 
-#Replace cortex-m85 with cortex-m55 for compatibility
+
 set(GCC_CPU ${CMAKE_SYSTEM_PROCESSOR})
+#Replace cortex-m85 with cortex-m55?
 string(REPLACE "cortex-m85" "cortex-m55" GCC_CPU ${GCC_CPU}) 
 
 set (TARGET_FLAGS "-mcpu=${GCC_CPU} -mthumb") #Base target 
 
-# Set floating point unit - check m33
+#TODO Set floating point unit - check m33
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+fp")
     set(FLOAT hard)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+nofp")
@@ -66,7 +67,7 @@ if(FLOAT)
 endif()
 
 #Transform the target flags into a list
-message("Target flags: ${TARGET_FLAGS}")
+
 separate_arguments(TARGET_FLAGS_LIST UNIX_COMMAND "${TARGET_FLAGS}")
 
 #Compile options
@@ -119,6 +120,10 @@ endif()
 
 #Assembly options
 set(CMAKE_ASM_FLAGS "${TARGET_FLAGS} -x assembler-with-cpp -MMD -MP")
+
+#Print information to console
+message(STATUS "Configuring for ARM cross-compilation")
+message(STATUS "Target flags: ${TARGET_FLAGS}")
 
 # #Optimization and debugging
 # if(CMAKE_BUILD_TYPE MATCHES Debug)
