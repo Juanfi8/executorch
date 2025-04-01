@@ -106,7 +106,7 @@ else()
         # Add memory usage output
         add_link_options(-Wl,--print-memory-usage)
         # Generate map file
-        add_link_options(-Wl,-Map=${CMAKE_PROJECT_NAME}.map)
+        # add_link_options(-Wl,-Map=${CMAKE_PROJECT_NAME}.map)
         # Standard libraries
         add_link_options(-Wl,--start-group -lc -lm -Wl,--end-group)
         # C++ standard libraries (conditionally)
