@@ -25,6 +25,7 @@ output_folder_set=false
 output_folder="."
 et_build_root="${et_root_dir}/arm_test"
 ethosu_tools_dir=${et_root_dir}/examples/arm/ethos-u-scratch
+flash=false
 
 build_bundleio_flags=" -DET_BUNDLE_IO=OFF "
 build_with_etdump_flags=" -DEXECUTORCH_ENABLE_EVENT_TRACER=OFF "
@@ -46,6 +47,7 @@ help() {
     echo "  --output=<FOLDER>               Output folder Default: <MODEL>/<MODEL>_<TARGET INFO>.pte"
     echo "  --et_build_root=<FOLDER>        Build output root folder to use, defaults to ${et_build_root}"
     echo "  --ethosu_tools_dir=<FOLDER>     Path to your Ethos-U tools dir if you not using default: ${ethosu_tools_dir}"
+    echo "  --flash                         Flash the generated elf file to the target"
     exit 0
 }
 
@@ -63,6 +65,7 @@ for arg in "$@"; do
       --output=*) output_folder="${arg#*=}" ; output_folder_set=true ;;
       --et_build_root=*) et_build_root="${arg#*=}";;
       --ethosu_tools_dir=*) ethosu_tools_dir="${arg#*=}";;
+      --flash) flash=true ;;
       *)
       ;;
     esac
@@ -172,3 +175,27 @@ find ${output_folder}/cmake-out -name "arm_executor_runner.elf"
 echo "executable_text: $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $1}') bytes"
 echo "executable_data: $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $2}') bytes"
 echo "executable_bss:  $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $3}') bytes"
+
+if [ "$flash" = true ] ; then
+    echo "Flashing the generated elf file to the target"
+    if [[ ${target} == "cortex-m33" ]]; then
+        STM32_Programmer_CLI.exe -c port=SWD freq=4000 -e all #Erase Flash memory 
+
+        # Use find to locate the .elf file in the build directory
+        elf_file=$(find ${output_folder}/cmake-out -name "*.elf" -print -quit)
+
+        # Check if an .elf file was found
+        if [ -z "$elf_file" ]; then
+        echo "No .elf file found in the build directory."
+        exit 1
+        fi
+
+        # Convert the Linux path to a Windows path
+        win_path=$(wslpath -m "$elf_file")
+
+        STM32_Programmer_CLI.exe -c port=SWD freq=4000 -w "$win_path" 0x08000000
+    else
+        echo "Unsupported target: ${target}"
+        exit 1
+    fi
+fi
