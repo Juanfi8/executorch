@@ -93,9 +93,8 @@ _setup_msg="please refer to ${script_dir}/setup.sh to properly install necessary
 # Set target based variables
 if [[ ${target} == "cortex-m33" ]]
 then
-    #TODO modify system_config and memory_mode
     system_config="Cortex_M33_Config" 
-    memory_mode="Sram_Only"
+    memory_mode="Cortex_M33_memory"
     build_only=true
 else
     if [[ ${system_config} == "" ]]
