@@ -92,9 +92,8 @@ fi
 # Set target based variables
 if [[ ${target} == "cortex-m33" ]]
 then
-    #TODO modify system_config and memory_mode
     system_config="Cortex_M33_Config" 
-    memory_mode="Sram_Only"
+    memory_mode="Cortex_M33_memory"
 else
     if [[ ${system_config} == "" ]]
     then
@@ -150,17 +149,17 @@ echo "Building with BundleIO/etdump/extra flags: ${build_bundleio_flags} ${build
 cmake \
     -DCMAKE_BUILD_TYPE=${build_type}            \
     -DCMAKE_TOOLCHAIN_FILE=${toolchain_cmake}   \
-    -DTARGET_CPU=${target_cpu}                  \ #Only used by the toolchain file
+    -DTARGET_CPU=${target_cpu}                  \
     -DET_DIR_PATH:PATH=${et_root_dir}           \
     -DET_BUILD_DIR_PATH:PATH=${et_build_dir}    \
     -DET_PTE_FILE_PATH:PATH="${pte_file}"       \
-    -DETHOS_SDK_PATH:PATH=${ethos_u_root_dir}   \ #TODO
-    -DETHOSU_TARGET_NPU_CONFIG=${target}        \ #TODO
+    -DETHOS_SDK_PATH:PATH=${ethos_u_root_dir}   \
+    -DETHOSU_TARGET_NPU_CONFIG=${target}        \
     ${build_bundleio_flags}                     \
     ${build_with_etdump_flags}                  \
     -DPYTHON_EXECUTABLE=$(which python3)        \
-    -DSYSTEM_CONFIG=${system_config}            \ #TODO
-    -DMEMORY_MODE=${memory_mode}                \ #TODO
+    -DSYSTEM_CONFIG=${system_config}            \
+    -DMEMORY_MODE=${memory_mode}                \
     ${extra_build_flags}                        \
     -B ${output_folder}/cmake-out
 
@@ -169,7 +168,7 @@ echo "[${BASH_SOURCE[0]}] Configured CMAKE"
 cmake --build ${output_folder}/cmake-out -j$(nproc) -- arm_executor_runner
 
 echo "[${BASH_SOURCE[0]}] Generated baremetal elf file:"
-find ${output_folder}/cmake-out -name "arm_executor_runner"
-echo "executable_text: $(find ${output_folder}/cmake-out -name arm_executor_runner -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $1}') bytes"
-echo "executable_data: $(find ${output_folder}/cmake-out -name arm_executor_runner -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $2}') bytes"
-echo "executable_bss:  $(find ${output_folder}/cmake-out -name arm_executor_runner -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $3}') bytes"
+find ${output_folder}/cmake-out -name "arm_executor_runner.elf"
+echo "executable_text: $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $1}') bytes"
+echo "executable_data: $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $2}') bytes"
+echo "executable_bss:  $(find ${output_folder}/cmake-out -name arm_executor_runner.elf -exec arm-none-eabi-size {} \; | grep -v filename | awk '{print $3}') bytes"
