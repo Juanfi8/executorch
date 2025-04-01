@@ -55,6 +55,7 @@ function help() {
     echo "  --memory_mode=<MODE>                   Memory mode to select from the Vela configuration file (see vela.ini), e.g. Shared_Sram/Sram_Only. Default: 'Shared_Sram' for Ethos-U55 targets, 'Sram_Only' for Ethos-U85 targets"
     echo "  --et_build_root=<FOLDER>               Executorch build output root folder to use, defaults to ${et_build_root}"
     echo "  --scratch-dir=<FOLDER>                 Path to your Ethos-U scrach dir if you not using default ${ethos_u_scratch_dir}"
+    echo "  --print-input                          Print the input tensor before inference in the executor_runner"           
     exit 0
 }
 
@@ -71,6 +72,7 @@ for arg in "$@"; do
       --etdump) build_with_etdump=true ;;
       --build_type=*) build_type="${arg#*=}";;
       --extra_build_flags=*) extra_build_flags="${arg#*=}";;
+      --print-input) extra_build_flags="${extra_build_flags} -DDUMP_INPUT=ON" ;; 
       --build_only) build_only=true ;;
       --system_config=*) system_config="${arg#*=}";;
       --memory_mode=*) memory_mode="${arg#*=}";;
@@ -94,6 +96,7 @@ then
     #TODO modify system_config and memory_mode
     system_config="Cortex_M33_Config" 
     memory_mode="Sram_Only"
+    build_only=true
 else
     if [[ ${system_config} == "" ]]
     then
@@ -229,7 +232,7 @@ for i in "${!test_model[@]}"; do
         backends/arm/scripts/build_executorch_runner.sh --et_build_root="${et_build_root}" --pte="${pte_file}" --build_type=${build_type} --target=${target} --system_config=${system_config} --memory_mode=${memory_mode} ${bundleio_flag} ${et_dump_flag} --extra_build_flags="${extra_build_flags}" --ethosu_tools_dir="${ethos_u_scratch_dir}"
         if [ "$build_only" = false ] ; then
             # Execute the executor_runner on FVP Simulator
-            elf_file="${output_folder}/${elf_folder}/cmake-out/arm_executor_runner"
+            elf_file="${output_folder}/${elf_folder}/cmake-out/arm_executor_runner.elf"
             backends/arm/scripts/run_fvp.sh --elf=${elf_file} --target=$target
         fi
         set +x

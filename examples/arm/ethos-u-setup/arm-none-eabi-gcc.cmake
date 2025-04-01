@@ -1,101 +1,129 @@
-#
-# Copyright (c) 2020-2022 Arm Limited. All rights reserved.
-#
-# SPDX-License-Identifier: Apache-2.0
-#
-# Licensed under the Apache License, Version 2.0 (the License); you may
-# not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an AS IS BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+set(CMAKE_SYSTEM_NAME               Generic)
 
-# Copied this file from core_platform/cmake/toolchain/arm-non-eabi-gcc.cmake And
-# modified to align better with cs300 platform
-
-set(TARGET_CPU
-    "cortex-m33" #Changed from cortex-m55 but it does not matter
-    CACHE STRING "Target CPU"
-)
-string(TOLOWER ${TARGET_CPU} CMAKE_SYSTEM_PROCESSOR)
-
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_C_COMPILER "arm-none-eabi-gcc")
-set(CMAKE_CXX_COMPILER "arm-none-eabi-g++")
-set(CMAKE_ASM_COMPILER "arm-none-eabi-gcc")
-set(CMAKE_LINKER "arm-none-eabi-ld")
-
-set(CMAKE_EXECUTABLE_SUFFIX ".elf")
-set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_C_COMPILER_FORCED TRUE)
+set(CMAKE_CXX_COMPILER_FORCED TRUE)
+set(CMAKE_C_COMPILER_ID GNU)
+set(CMAKE_CXX_COMPILER_ID GNU)
 
 # Select C/C++ version
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-set(GCC_CPU ${CMAKE_SYSTEM_PROCESSOR})
-string(REPLACE "cortex-m85" "cortex-m55" GCC_CPU ${GCC_CPU}) #Why is this necessary?
+# Some default GCC settings
+# arm-none-eabi- must be part of path environment
+set(TOOLCHAIN_PREFIX                arm-none-eabi-)
 
-# Compile options
+set(CMAKE_C_COMPILER                ${TOOLCHAIN_PREFIX}gcc)
+set(CMAKE_ASM_COMPILER              ${CMAKE_C_COMPILER})
+set(CMAKE_CXX_COMPILER              ${TOOLCHAIN_PREFIX}g++)
+set(CMAKE_LINKER                    ${TOOLCHAIN_PREFIX}ld)
+set(CMAKE_OBJCOPY                   ${TOOLCHAIN_PREFIX}objcopy)
+set(CMAKE_SIZE                      ${TOOLCHAIN_PREFIX}size)
+
+set(CMAKE_EXECUTABLE_SUFFIX_ASM     ".elf")
+set(CMAKE_EXECUTABLE_SUFFIX_C       ".elf")
+set(CMAKE_EXECUTABLE_SUFFIX_CXX     ".elf")
+
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
+# Set the target cpu from the command line
+set(TARGET_CPU
+    "cortex-m33" #Default target 
+    CACHE STRING "Target CPU"
+)
+string(TOLOWER ${TARGET_CPU} CMAKE_SYSTEM_PROCESSOR)
+
+#Replace cortex-m85 with cortex-m55 for compatibility
+set(GCC_CPU ${CMAKE_SYSTEM_PROCESSOR})
+string(REPLACE "cortex-m85" "cortex-m55" GCC_CPU ${GCC_CPU}) 
+
+set (TARGET_FLAGS "-mcpu=${GCC_CPU} -mthumb") #Base target 
+
+# Set floating point unit - check m33
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+fp")
+    set(FLOAT hard)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+nofp")
+    set(FLOAT soft)
+elseif(
+    CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m55(\\+|$)"
+    OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m85(\\+|$)"
+)
+    set(FLOAT hard)
+elseif(  CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m33(\\+|$)" #Modified
+        OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m4(\\+|$)"
+            OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m7(\\+|$)")
+    set(FLOAT hard)
+    set(FPU_CONFIG "fpv4-sp-d16")
+    set(TARGET_FLAGS "${TARGET_FLAGS} -mfpu=${FPU_CONFIG}")
+else()
+    set(FLOAT soft)
+endif()
+if(FLOAT)
+    set(TARGET_FLAGS "${TARGET_FLAGS} -mfloat-abi=${FLOAT}")
+endif()
+
+#Transform the target flags into a list
+message("Target flags: ${TARGET_FLAGS}")
+separate_arguments(TARGET_FLAGS_LIST UNIX_COMMAND "${TARGET_FLAGS}")
+
+#Compile options
 add_compile_options(
-  -mcpu=${GCC_CPU} -mthumb "$<$<CONFIG:DEBUG>:-gdwarf-3>"
-  "$<$<COMPILE_LANGUAGE:CXX>:-fno-unwind-tables;-fno-rtti;-fno-exceptions>"
-  -fdata-sections -ffunction-sections
+    ${TARGET_FLAGS_LIST}
+    # "$<$<CONFIG:DEBUG>:-gdwarf-3>" #Debugging info
+    "$<$<COMPILE_LANGUAGE:CXX>:-fno-unwind-tables;-fno-rtti;-fno-exceptions>" #-fno-threadsafe-statics in STM cmake
+    -fdata-sections
+    -ffunction-sections
 )
 
-# Compile defines
+# add_compile_options(-Wall -Wextra -Wpedantic -Wno-psabi) #Warning flags
+add_compile_options(-Wno-psabi) #Warning flags
+
+#Compile defines
 add_compile_definitions("$<$<NOT:$<CONFIG:DEBUG>>:NDEBUG>")
 
-# Link options
-add_link_options(-mcpu=${GCC_CPU} -mthumb)
+#Link options
+add_link_options(
+    ${TARGET_FLAGS_LIST}
+    -Wl,--gc-sections #Remove unused sections (garbage collection)
+    -Wl,--nmagic 
+)
 
 if(SEMIHOSTING)
-  add_link_options(--specs=rdimon.specs)
+    add_link_options(--specs=rdimon.specs)
 else()
-  add_link_options(--specs=nosys.specs)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "cortex-m33")
+        add_link_options(
+            --specs=nano.specs # Use newlib-nano
+            -u _printf_float # Enable printf float support
+        )
+        # Add linker script
+        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/STM32H563xx_FLASH.ld")
+        add_link_options(-T${LINKER_SCRIPT})
+        # Add memory usage output
+        add_link_options(-Wl,--print-memory-usage)
+        # Generate map file
+        add_link_options(-Wl,-Map=${CMAKE_PROJECT_NAME}.map)
+        # Standard libraries
+        add_link_options(-Wl,--start-group -lc -lm -Wl,--end-group)
+        # C++ standard libraries (conditionally)
+        add_link_options(
+            "$<$<COMPILE_LANGUAGE:CXX>:-Wl,--start-group;-lstdc++;-lsupc++;-Wl,--end-group>"
+        )
+    else()
+        add_link_options(--specs=nosys.specs)
+    endif()
 endif()
 
-# Set floating point unit
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+fp")
-  set(FLOAT hard)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "\\+nofp")
-  set(FLOAT soft)
-elseif(
-  CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m33(\\+|$)"
-  OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m55(\\+|$)"
-  OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m85(\\+|$)"
-)
-  set(FLOAT hard)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m4(\\+|$)"
-      OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m7(\\+|$)"
-)
-  set(FLOAT hard)
-  set(FPU_CONFIG "fpv4-sp-d16")
-  add_compile_options(-mfpu=${FPU_CONFIG})
-  add_link_options(-mfpu=${FPU_CONFIG})
-else()
-  set(FLOAT soft)
-endif()
+#Assembly options
+set(CMAKE_ASM_FLAGS "${TARGET_FLAGS} -x assembler-with-cpp -MMD -MP")
 
-if(FLOAT)
-  add_compile_options(-mfloat-abi=${FLOAT})
-  add_link_options(-mfloat-abi=${FLOAT})
-endif()
-
-add_link_options(LINKER:--nmagic,--gc-sections)
-
-# Compilation warnings
-add_compile_options(
-  # -Wall -Wextra -Wcast-align -Wdouble-promotion -Wformat
-  # -Wmissing-field-initializers -Wnull-dereference -Wredundant-decls -Wshadow
-  # -Wswitch -Wswitch-default -Wunused -Wno-redundant-decls
-  -Wno-psabi
-)
+# #Optimization and debugging
+# if(CMAKE_BUILD_TYPE MATCHES Debug)
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g3")
+# endif()
+# if(CMAKE_BUILD_TYPE MATCHES Release)
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -g0")
+# endif()
