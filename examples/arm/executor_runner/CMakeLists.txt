@@ -10,7 +10,7 @@ set(CMAKE_C_EXTENSIONS ON)
 
 
 # Set the project name
-project(arm_executor_runner)
+project(arm_executor_runner C CXX ASM)
 
 option(SEMIHOSTING "Enable semihosting" OFF)
 option(ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE "Set ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE to specify memory alloction pool size" OFF)
@@ -18,7 +18,6 @@ option(ET_ARM_BAREMETAL_TEMP_ALLOCATOR_POOL_SIZE "Set ET_ARM_BAREMETAL_TEMP_ALLO
 option(ET_BUNDLE_IO "Set to compile in BundleIO support" OFF)
 option(ET_ATOL "Set atol to use for BundleIO testing" OFF)
 option(ET_RTOL "Set rtol to use for BundleIO testing" OFF)
-option(FETCH_ETHOS_U_CONTENT "Fetch ethos_u dependencies instead of relying on pre-downloads" OFF)
 option(DUMP_INPUT "Set to dump input data" OFF)
 
 if(NOT DEFINED ET_PTE_FILE_PATH AND NOT ${SEMIHOSTING})
@@ -120,7 +119,7 @@ endif()
 
 # The arm_executor_runner executable
 add_executable(arm_executor_runner)
-target_sources(arm_executor_runner PRIVATE arm_executor_runner.cpp arm_perf_monitor.cpp)
+
 
 # ET headers and generated headers includes
 target_include_directories(
@@ -157,9 +156,9 @@ target_link_libraries(
 # Platform specific includes
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m55(\\+|$)" 
 OR CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m85(\\+|$)")
-  include(ethos-u.cmake)
+  add_subdirectory(ethos-u)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "cortex-m33(\\+|$)")
-  include(stm32h5.cmake)
+  add_subdirectory(stm32h5)
 else()
   message(
     FATAL_ERROR

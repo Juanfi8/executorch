@@ -1,3 +1,8 @@
+option(FETCH_ETHOS_U_CONTENT "Fetch ethos_u dependencies instead of relying on pre-downloads" OFF)
+
+#Add the ethos-u source files
+target_sources(arm_executor_runner PRIVATE arm_executor_runner.cpp arm_perf_monitor.cpp)
+
 set(ETHOS_SDK_PATH
     "${ET_DIR_PATH}/examples/arm/ethos-u-scratch/ethos-u"
     CACHE PATH "Path to Ethos-U bare metal driver/env"
