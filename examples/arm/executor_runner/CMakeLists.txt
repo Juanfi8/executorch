@@ -148,6 +148,7 @@ list(APPEND arm_executor_runner_link
 # quantized_kernels
 # portable_kernels
 # "-Wl,--no-whole-archive"
+
 target_link_libraries(
   arm_executor_runner
   ${arm_executor_runner_link}

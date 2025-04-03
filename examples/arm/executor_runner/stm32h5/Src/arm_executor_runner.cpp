@@ -105,7 +105,7 @@ using executorch::etdump::ETDumpResult;
 */
 #if !defined(ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE)
 //  #define ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE (60 * 1024 * 1024)
-#define ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE (32 * 1024 ) // 19815 Bytes is the minimum needed
+#define ET_ARM_BAREMETAL_METHOD_ALLOCATOR_POOL_SIZE (2 * 1024 ) // 19815 Bytes is the minimum needed
 #endif
 
 const size_t method_allocation_pool_size =
@@ -122,7 +122,7 @@ unsigned char __attribute__((
 */
 #if !defined(ET_ARM_BAREMETAL_TEMP_ALLOCATOR_POOL_SIZE)
 //  #define ET_ARM_BAREMETAL_TEMP_ALLOCATOR_POOL_SIZE (1 * 1024 * 1024)
-#define ET_ARM_BAREMETAL_TEMP_ALLOCATOR_POOL_SIZE (13 * 1024) // 16.312 KB, no minimum required
+#define ET_ARM_BAREMETAL_TEMP_ALLOCATOR_POOL_SIZE (1 * 512) // 16.312 KB, no minimum required
 #endif
 
 const size_t temp_allocation_pool_size =
@@ -149,12 +149,13 @@ const float et_rtol = 0.01;
 
 #endif
 
+//TODO
 void et_pal_init(void) {
-  // Enable ARM PMU Clock
-  ARM_PMU_Enable();
-  DCB->DEMCR |= DCB_DEMCR_TRCENA_Msk; // Trace enable
-  ARM_PMU_CYCCNT_Reset();
-  ARM_PMU_CNTR_Enable(PMU_CNTENSET_CCNTR_ENABLE_Msk);
+  // // Enable ARM PMU Clock
+  // ARM_PMU_Enable();
+  // DCB->DEMCR |= DCB_DEMCR_TRCENA_Msk; // Trace enable
+  // ARM_PMU_CYCCNT_Reset();
+  // ARM_PMU_CNTR_Enable(PMU_CNTENSET_CCNTR_ENABLE_Msk);
 }
 
 /**
@@ -173,15 +174,15 @@ ET_NORETURN void et_pal_abort(void) {
   #endif
 }
 
-et_timestamp_t et_pal_current_ticks(void) {
-  return ARM_PMU_Get_CCNTR();
-}
+// et_timestamp_t et_pal_current_ticks(void) {
+//   return ARM_PMU_Get_CCNTR();
+// }
 
-et_tick_ratio_t et_pal_ticks_to_ns_multiplier(void) {
-  // Since we don't know the CPU freq for your target and justs cycles in the
-  // FVP for et_pal_current_ticks() we return a conversion ratio of 1
-  return {1, 1};
-}
+// et_tick_ratio_t et_pal_ticks_to_ns_multiplier(void) {
+//   // Since we don't know the CPU freq for your target and justs cycles in the
+//   // FVP for et_pal_current_ticks() we return a conversion ratio of 1
+//   return {1, 1};
+// }
 
 /**
 * Emit a log message via platform output (serial port, console, etc).
@@ -195,7 +196,7 @@ void et_pal_emit_log_message(
   const char* message,
   ET_UNUSED size_t length) {
     fprintf(
-      stderr, "%c [executorch:%s:%zu] %s\n", level, filename, line, message);
+      stderr, "%c [executorch:%s:%zu] %s\n", level, filename, line, message);  /*TODO */
   }
 
   
@@ -461,6 +462,7 @@ extern "C" int executor_main(int argc, const char* argv[]) {
             }
           }
   #endif
+
   ET_LOG(Info, "PTE in %p %c Size: %lu bytes", model_pte, model_pte[0], pte_size);
   // Find the offset to the embedded Program.
   const void* program_data = model_pte;
@@ -483,6 +485,7 @@ extern "C" int executor_main(int argc, const char* argv[]) {
           (unsigned int)status);
         }
   #endif
+
   auto loader = BufferDataLoader(program_data, program_data_len);
   ET_LOG(Info, "PTE Model data loaded. Size: %lu bytes.", program_data_len);
   

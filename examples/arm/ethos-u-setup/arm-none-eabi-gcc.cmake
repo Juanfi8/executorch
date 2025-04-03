@@ -97,11 +97,10 @@ if(SEMIHOSTING)
 else()
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "cortex-m33")
         add_link_options(
-            --specs=nano.specs # Use newlib-nano
-            -u _printf_float # Enable printf float support
+            --specs=nosys.specs
         )
         # Add linker script
-        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/STM32H563xx_FLASH.ld")
+        set(LINKER_SCRIPT "${CMAKE_SOURCE_DIR}/stm32h5/STM32H563xx_FLASH.ld")
         add_link_options(-T${LINKER_SCRIPT})
         # Add memory usage output
         add_link_options(-Wl,--print-memory-usage)

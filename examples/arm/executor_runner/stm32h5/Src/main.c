@@ -1,6 +1,6 @@
 #include "main.h"
 #include <stdio.h>
-
+#include <time.h> //TODO
 
 UART_HandleTypeDef huart3;
 
@@ -26,7 +26,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART3_UART_Init();
-  MX_ICACHE_Init();    
+  MX_ICACHE_Init();
+  BSP_LED_Init(LED3);
+  BSP_LED_Off(LED3);    
   
   /* End MCU Configuration--------------------------------------------------------*/
   //Printf
@@ -34,8 +36,16 @@ int main(void)
 
   executor_main(0,NULL); // Call the C-compatible function
 
-
+  BSP_LED_On(LED3);
+  
   return 0;
+}
+//TODO check thi stime implementation
+int __attribute__((weak)) _gettimeofday(struct timeval *tv, void *tz)
+{
+	(void)tv;
+	(void)tz;
+	return 0;
 }
 
 // * @brief System Clock Configuration

@@ -149,6 +149,23 @@ fi
 echo "Building with BundleIO/etdump/extra flags: ${build_bundleio_flags} ${build_with_etdump_flags} ${extra_build_flags}"
 
 #TODO add the option to pass the cmake flags
+# echo "cmake \
+#     -DCMAKE_BUILD_TYPE=${build_type}            \
+#     -DCMAKE_TOOLCHAIN_FILE=${toolchain_cmake}   \
+#     -DTARGET_CPU=${target_cpu}                  \
+#     -DET_DIR_PATH:PATH=${et_root_dir}           \
+#     -DET_BUILD_DIR_PATH:PATH=${et_build_dir}    \
+#     -DET_PTE_FILE_PATH:PATH=\"${pte_file}\"     \
+#     -DETHOS_SDK_PATH:PATH=${ethos_u_root_dir}   \
+#     -DETHOSU_TARGET_NPU_CONFIG=${target}        \
+#     ${build_bundleio_flags}                     \
+#     ${build_with_etdump_flags}                  \
+#     -DPYTHON_EXECUTABLE=$(which python3)        \
+#     -DSYSTEM_CONFIG=${system_config}            \
+#     -DMEMORY_MODE=${memory_mode}                \
+#     ${extra_build_flags}                        \
+#     -B ${output_folder}/cmake-out"
+
 cmake \
     -DCMAKE_BUILD_TYPE=${build_type}            \
     -DCMAKE_TOOLCHAIN_FILE=${toolchain_cmake}   \
@@ -168,6 +185,7 @@ cmake \
 
 echo "[${BASH_SOURCE[0]}] Configured CMAKE"
 
+# echo "cmake --build ${output_folder}/cmake-out -j$(nproc) -- arm_executor_runner"
 cmake --build ${output_folder}/cmake-out -j$(nproc) -- arm_executor_runner
 
 echo "[${BASH_SOURCE[0]}] Generated baremetal elf file:"
